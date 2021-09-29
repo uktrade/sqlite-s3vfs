@@ -1,3 +1,3 @@
-# writable-sqlite-s3-vfs
+# sqlite-s3vfs
 
 Virtual filesystem for SQLite to read and write to S3
