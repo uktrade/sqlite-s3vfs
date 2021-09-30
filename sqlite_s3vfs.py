@@ -6,13 +6,13 @@ import apsw
 class S3VFS(apsw.VFS):        
     def __init__(self, bucket, block_size=4096):
         self.name = f's3vfs-{str(uuid.uuid4())}'
-        self.bucket = bucket
-        self.block_size = block_size
+        self._bucket = bucket
+        self._block_size = block_size
         super().__init__(name=self.name, base='')
 
     def xAccess(self, pathname, flags):
         if flags == apsw.mapping_access["SQLITE_ACCESS_EXISTS"]:
-            return any(self.bucket.objects.filter(Prefix=pathname))
+            return any(self._bucket.objects.filter(Prefix=pathname))
         elif flags == apsw.mapping_access["SQLITE_ACCESS_READWRITE"]:
             # something sometihng ACLs
             return True
@@ -21,41 +21,41 @@ class S3VFS(apsw.VFS):
             return True
 
     def xDelete(self, filename, syncdir):
-        self.bucket.objects.filter(Prefix=filename).delete()
+        self._bucket.objects.filter(Prefix=filename).delete()
 
     def xOpen(self, name, flags):
-        return S3VFSFile(name, flags, self.bucket, self.block_size)
+        return S3VFSFile(name, flags, self._bucket, self._block_size)
 
 
 class S3VFSFile:
     def __init__(self, name, flags, bucket, block_size):
         if isinstance(name, apsw.URIFilename):
-            self.key = name.filename()
+            self._key = name.filename()
         else:
-            self.key = name
-        self.bucket = bucket
-        self.block_size = block_size
+            self._key = name
+        self._bucket = bucket
+        self._block_size = block_size
 
     def _blocks(self, offset, amount):
         while amount > 0:
-            block = offset // self.block_size  # which block to get
-            start = offset % self.block_size   # place in block to start
-            consume = min(self.block_size - start, amount)
+            block = offset // self._block_size  # which block to get
+            start = offset % self._block_size   # place in block to start
+            consume = min(self._block_size - start, amount)
             yield (block, start, consume)
             amount -= consume
             offset += consume
 
     def _block_object(self, block):
-        return self.bucket.Object(self.key + "/" + str(block))
+        return self._bucket.Object(self._key + "/" + str(block))
 
     def _block(self, block):
         try:
             data = self._block_object(block).get()["Body"].read()
-        except self.bucket.meta.client.exceptions.NoSuchKey as e:
-            data = b"".join([b"\x00"] * self.block_size)
+        except self._bucket.meta.client.exceptions.NoSuchKey as e:
+            data = b"".join([b"\x00"] * self._block_size)
 
         assert type(data) is bytes
-        assert len(data) == self.block_size
+        assert len(data) == self._block_size
         return data
 
     def _read(self, amount, offset):
@@ -82,7 +82,7 @@ class S3VFSFile:
         pass
 
     def xFileSize(self):
-        return sum(o.size for o in self.bucket.objects.filter(Prefix=self.key + "/"))
+        return sum(o.size for o in self._bucket.objects.filter(Prefix=self._key + "/"))
 
     def xSync(self, flags):
         return True
@@ -100,7 +100,7 @@ class S3VFSFile:
                 data,
                 full_data[start+write:],
             ])
-            assert len(new_data) == self.block_size
+            assert len(new_data) == self._block_size
 
             self._block_object(block).put(
                 Body=new_data,
