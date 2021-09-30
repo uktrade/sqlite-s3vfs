@@ -7,7 +7,7 @@ import pytest
 from sqlite_s3vfs import S3VFS
 
 SIZES = [512, 1024, 2048, 4096, 8192, 16384, 32768, 65536]
-JOURNAL_MODES = ['DELETE']
+JOURNAL_MODES = ['DELETE' ,'TRUNCATE', 'PERSIST', 'MEMORY' ,'WAL', 'OFF']
 
 @pytest.fixture
 def bucket():
