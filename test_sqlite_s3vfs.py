@@ -26,8 +26,10 @@ def test_dummy(bucket):
 
     with apsw.Connection("/a-test/cool.db", vfs=s3vfs.name) as db:
         cursor = db.cursor()
-        cursor.execute("create table foo(x,y); insert into foo values(1,2)")
-
+        cursor.execute('''
+            CREATE TABLE foo(x,y);
+            INSERT INTO foo VALUES(1,2);
+        ''')
         cursor.execute('SELECT * FROM foo;')
-        rows = cursor.fetchall()
-        assert rows == [(1, 2)]
+
+        assert cursor.fetchall() == [(1, 2)]
