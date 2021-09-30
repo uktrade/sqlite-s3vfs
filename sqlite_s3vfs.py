@@ -49,20 +49,20 @@ class S3VFSFile:
     def _block_object(self, block):
         return self._bucket.Object(f'{self._key}/{block:010d}')
 
-    def _block(self, block):
+    def _block_bytes(self, block):
         try:
-            data = self._block_object(block).get()["Body"].read()
+            block_bytes = self._block_object(block).get()["Body"].read()
         except self._bucket.meta.client.exceptions.NoSuchKey as e:
-            data = self._empty_block_bytes
+            block_bytes = self._empty_block_bytes
 
-        assert type(data) is bytes
-        assert len(data) == self._block_size
-        return data
+        assert type(block_bytes) is bytes
+        assert len(block_bytes) == self._block_size
+        return block_bytes
 
     def _read(self, amount, offset):
         for block, start, consume in self._blocks(offset, amount):
-            data = self._block(block)
-            yield data[start:start+consume]
+            block_bytes = self._block_bytes(block)
+            yield block_bytes[start:start+consume]
 
     def xRead(self, amount, offset):
         return b"".join(self._read(amount, offset))
@@ -95,14 +95,14 @@ class S3VFSFile:
         for block, start, write in self._blocks(offset, len(data)):
             assert write <= len(data)
 
-            full_data = self._block(block)
-            new_data = b"".join([
-                full_data[0:start],
+            original_block_bytes = self._block_bytes(block)
+            new_block_bytes = b"".join([
+                original_block_bytes[0:start],
                 data,
-                full_data[start+write:],
+                original_block_bytes[start+write:],
             ])
-            assert len(new_data) == self._block_size
+            assert len(new_block_bytes) == self._block_size
 
             self._block_object(block).put(
-                Body=new_data,
+                Body=new_block_bytes,
             )
