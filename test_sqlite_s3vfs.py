@@ -37,3 +37,8 @@ def test_dummy(bucket, block_size):
         cursor.execute('SELECT * FROM foo;')
 
         assert cursor.fetchall() == [(1, 2)]
+
+    with apsw.Connection("/a-test/cool.db", vfs=s3vfs.name) as db:
+        cursor.execute('SELECT * FROM foo;')
+
+        assert cursor.fetchall() == [(1, 2)]
