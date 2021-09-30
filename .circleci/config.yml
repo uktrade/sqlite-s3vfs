@@ -25,7 +25,7 @@ jobs:
           command: |
             set -xu
             ./cc-test-reporter before-build
-            coverage run -m pytest test.py
+            coverage run -m pytest
             EXIT_CODE=$?
             coverage xml
             ./cc-test-reporter after-build --exit-code $EXIT_CODE
