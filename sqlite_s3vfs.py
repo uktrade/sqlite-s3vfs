@@ -59,13 +59,13 @@ class S3VFSFile:
         assert len(block_bytes) == self._block_size
         return block_bytes
 
-    def _read(self, amount, offset):
-        for block, start, consume in self._blocks(offset, amount):
-            block_bytes = self._block_bytes(block)
-            yield block_bytes[start:start+consume]
-
     def xRead(self, amount, offset):
-        return b"".join(self._read(amount, offset))
+        def _read():
+            for block, start, consume in self._blocks(offset, amount):
+                block_bytes = self._block_bytes(block)
+                yield block_bytes[start:start+consume]
+
+        return b"".join(_read())
 
     def xFileControl(self, *args):
         return False
