@@ -36,7 +36,7 @@ class S3VFSFile:
         self.bucket = bucket
         self.block_size = block_size
 
-    def blocks(self, offset, amount):
+    def _blocks(self, offset, amount):
         while amount > 0:
             block = offset // self.block_size  # which block to get
             start = offset % self.block_size   # place in block to start
@@ -45,12 +45,12 @@ class S3VFSFile:
             amount -= consume
             offset += consume
 
-    def block_object(self, block):
+    def _block_object(self, block):
         return self.bucket.Object(self.key + "/" + str(block))
 
-    def block(self, block):
+    def _block(self, block):
         try:
-            data = self.block_object(block).get()["Body"].read()
+            data = self._block_object(block).get()["Body"].read()
         except self.bucket.meta.client.exceptions.NoSuchKey as e:
             data = b"".join([b"\x00"] * self.block_size)
 
@@ -58,13 +58,13 @@ class S3VFSFile:
         assert len(data) == self.block_size
         return data
 
-    def read(self, amount, offset):
-        for block, start, consume in self.blocks(offset, amount):
-            data = self.block(block)
+    def _read(self, amount, offset):
+        for block, start, consume in self._blocks(offset, amount):
+            data = self._block(block)
             yield data[start:start+consume]
 
     def xRead(self, amount, offset):
-        return b"".join(self.read(amount, offset))
+        return b"".join(self._read(amount, offset))
 
     def xFileControl(self, *args):
         return False
@@ -91,10 +91,10 @@ class S3VFSFile:
         return True
 
     def xWrite(self, data, offset):
-        for block, start, write in self.blocks(offset, len(data)):
+        for block, start, write in self._blocks(offset, len(data)):
             assert write <= len(data)
 
-            full_data = self.block(block)
+            full_data = self._block(block)
             new_data = b"".join([
                 full_data[0:start],
                 data,
@@ -102,6 +102,6 @@ class S3VFSFile:
             ])
             assert len(new_data) == self.block_size
 
-            self.block_object(block).put(
+            self._block_object(block).put(
                 Body=new_data,
             )
