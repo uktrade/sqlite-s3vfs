@@ -3,7 +3,7 @@
 Virtual filesystem for SQLite to read from and write to S3
 
 
-# Installation
+## Installation
 
 sqlite-s3vfs depends on [APSW](https://github.com/rogerbinns/apsw), which is not officially available on PyPI, but can be installed directly from GitHub.
 
