@@ -92,15 +92,19 @@ class S3VFSFile:
         return True
 
     def xWrite(self, data, offset):
+        data_offset = 0
         for block, start, write in self._blocks(offset, len(data)):
+
             assert write <= len(data)
 
             original_block_bytes = self._block_bytes(block)
             new_block_bytes = b"".join([
                 original_block_bytes[0:start],
-                data,
+                data[data_offset:data_offset+write],
                 original_block_bytes[start+write:],
             ])
+            data_offset += write
+
             assert len(new_block_bytes) == self._block_size
 
             self._block_object(block).put(
