@@ -4,6 +4,7 @@ import pytest
 
 from sqlite_s3vfs import S3VFS
 
+SIZES = [4096, 8192, 16384, 32768, 65536]
 
 @pytest.fixture
 def bucket():
@@ -21,8 +22,11 @@ def bucket():
     bucket.delete()
 
 
-def test_dummy(bucket):
-    s3vfs = S3VFS(bucket=bucket)
+@pytest.mark.parametrize(
+    'block_size', SIZES
+)
+def test_dummy(bucket, block_size):
+    s3vfs = S3VFS(bucket=bucket, block_size=block_size)
 
     with apsw.Connection("/a-test/cool.db", vfs=s3vfs.name) as db:
         cursor = db.cursor()
