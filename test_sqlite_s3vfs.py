@@ -38,7 +38,7 @@ def bucket():
 def test_dummy(bucket, page_size, block_size, journal_mode):
     s3vfs = S3VFS(bucket=bucket, block_size=block_size)
 
-    with apsw.Connection("/a-test/cool.db", vfs=s3vfs.name) as db:
+    with apsw.Connection("a-test/cool.db", vfs=s3vfs.name) as db:
         cursor = db.cursor()
         cursor.execute(f'''
             PRAGMA journal_mode = {journal_mode};
@@ -54,7 +54,7 @@ def test_dummy(bucket, page_size, block_size, journal_mode):
 
         assert cursor.fetchall() == [(1, 2)]
 
-    with apsw.Connection("/a-test/cool.db", vfs=s3vfs.name) as db:
+    with apsw.Connection("a-test/cool.db", vfs=s3vfs.name) as db:
         cursor.execute('SELECT * FROM foo;')
 
         assert cursor.fetchall() == [(1, 2)]
