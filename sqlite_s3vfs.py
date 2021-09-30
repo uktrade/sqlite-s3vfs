@@ -46,7 +46,7 @@ class S3VFSFile:
             offset += consume
 
     def _block_object(self, block):
-        return self._bucket.Object(self._key + "/" + str(block))
+        return self._bucket.Object(f'{self._key}/{block:010d}')
 
     def _block(self, block):
         try:
