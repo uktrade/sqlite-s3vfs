@@ -21,6 +21,9 @@ setuptools.setup(
         'Topic :: Database',
     ],
     python_requires='>=3.6.0',
+    install_requires=[
+        'boto3>=1.18.51',
+    ],
     py_modules=[
         'sqlite_s3vfs',
     ],
