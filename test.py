@@ -14,10 +14,7 @@ def test_dummy():
         endpoint_url='http://localhost:9000/'
     )
     bucket = s3.create_bucket(Bucket='my-bucket')
-    s3vfs = S3VFS(
-        s3=s3,
-        bucket=bucket,
-    )
+    s3vfs = S3VFS(bucket=bucket)
 
     db=apsw.Connection("/a-test/cool.db", vfs=s3vfs.vfsname)
     db.cursor().execute("create table foo(x,y); insert into foo values(1,2)")

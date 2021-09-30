@@ -6,10 +6,9 @@ EMPTY_BLOCK = b"".join([b"\x00"] * BLOCK_SIZE)
 
 # Inheriting from a base of "" means the default vfs
 class S3VFS(apsw.VFS):        
-    def __init__(self, s3, bucket, vfsname=f"s3vfs", basevfs=""):
+    def __init__(self, bucket, vfsname=f"s3vfs", basevfs=""):
         self.vfsname = vfsname
         self.basevfs = basevfs
-        self.s3 = s3
         self.bucket = bucket
         apsw.VFS.__init__(self, self.vfsname, self.basevfs)
 
@@ -27,16 +26,15 @@ class S3VFS(apsw.VFS):
         self.bucket.objects.filter(Prefix=filename).delete()
 
     def xOpen(self, name, flags):
-        return S3VFSFile(self.basevfs, name, flags, self.s3, self.bucket)
+        return S3VFSFile(self.basevfs, name, flags, self.bucket)
 
 
 class S3VFSFile:
-    def __init__(self, inheritfromvfsname, name, flags, s3, bucket):
+    def __init__(self, inheritfromvfsname, name, flags, bucket):
         if isinstance(name, apsw.URIFilename):
             self.key = name.filename()
         else:
             self.key = name
-        self.s3 = s3
         self.bucket = bucket
 
     def blocks(self, offset, amount):
