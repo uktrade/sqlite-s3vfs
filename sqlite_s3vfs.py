@@ -4,12 +4,12 @@ import apsw
 BLOCK_SIZE = 64 * 1024
 EMPTY_BLOCK = b"".join([b"\x00"] * BLOCK_SIZE)
 
-# Inheriting from a base of "" means the default vfs
+
 class S3VFS(apsw.VFS):        
-    def __init__(self, bucket, vfsname=f"s3vfs", basevfs=""):
+    def __init__(self, bucket, vfsname=f"s3vfs"):
         self.vfsname = vfsname
         self.bucket = bucket
-        apsw.VFS.__init__(self, self.vfsname, basevfs)
+        apsw.VFS.__init__(self, self.vfsname, base='')
 
     def xAccess(self, pathname, flags):
         if flags == apsw.mapping_access["SQLITE_ACCESS_EXISTS"]:
