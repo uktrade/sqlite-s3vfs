@@ -8,9 +8,8 @@ EMPTY_BLOCK = b"".join([b"\x00"] * BLOCK_SIZE)
 class S3VFS(apsw.VFS):        
     def __init__(self, bucket, vfsname=f"s3vfs", basevfs=""):
         self.vfsname = vfsname
-        self.basevfs = basevfs
         self.bucket = bucket
-        apsw.VFS.__init__(self, self.vfsname, self.basevfs)
+        apsw.VFS.__init__(self, self.vfsname, basevfs)
 
     def xAccess(self, pathname, flags):
         if flags == apsw.mapping_access["SQLITE_ACCESS_EXISTS"]:
