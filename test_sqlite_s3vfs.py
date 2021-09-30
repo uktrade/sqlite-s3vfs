@@ -1,3 +1,5 @@
+import uuid
+
 import apsw
 import boto3
 import pytest
@@ -16,7 +18,7 @@ def bucket():
     s3 = session.resource('s3',
         endpoint_url='http://localhost:9000/'
     )
-    bucket = s3.create_bucket(Bucket='my-bucket')
+    bucket = s3.create_bucket(Bucket=f's3vfs-{str(uuid.uuid4())}')
     yield bucket
     bucket.objects.all().delete()
     bucket.delete()
