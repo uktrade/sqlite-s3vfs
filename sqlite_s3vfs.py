@@ -54,7 +54,7 @@ class S3VFSFile:
     def block(self, block):
         try:
             data = self.block_object(block).get()["Body"].read()
-        except self.s3.meta.client.exceptions.NoSuchKey as e:
+        except self.bucket.meta.client.exceptions.NoSuchKey as e:
             data = EMPTY_BLOCK
 
         assert type(data) is bytes
