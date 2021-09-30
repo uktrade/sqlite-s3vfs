@@ -24,5 +24,5 @@ def bucket():
 def test_dummy(bucket):
     s3vfs = S3VFS(bucket=bucket)
 
-    db = apsw.Connection("/a-test/cool.db", vfs=s3vfs.vfsname)
-    db.cursor().execute("create table foo(x,y); insert into foo values(1,2)")
+    with apsw.Connection("/a-test/cool.db", vfs=s3vfs.vfsname) as db:
+        db.cursor().execute("create table foo(x,y); insert into foo values(1,2)")
