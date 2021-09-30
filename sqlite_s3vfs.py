@@ -1,3 +1,4 @@
+import uuid
 import boto3
 import apsw
 
@@ -6,10 +7,10 @@ EMPTY_BLOCK = b"".join([b"\x00"] * BLOCK_SIZE)
 
 
 class S3VFS(apsw.VFS):        
-    def __init__(self, bucket, vfsname=f"s3vfs"):
-        self.vfsname = vfsname
+    def __init__(self, bucket):
+        self.name = f's3vfs-{str(uuid.uuid4())}'
         self.bucket = bucket
-        apsw.VFS.__init__(self, self.vfsname, base='')
+        apsw.VFS.__init__(self, name=self.name, base='')
 
     def xAccess(self, pathname, flags):
         if flags == apsw.mapping_access["SQLITE_ACCESS_EXISTS"]:
