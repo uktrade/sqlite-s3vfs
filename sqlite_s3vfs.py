@@ -35,6 +35,7 @@ class S3VFSFile:
             self._key = name
         self._bucket = bucket
         self._block_size = block_size
+        self._empty_block_bytes = bytes(self._block_size)
 
     def _blocks(self, offset, amount):
         while amount > 0:
@@ -52,7 +53,7 @@ class S3VFSFile:
         try:
             data = self._block_object(block).get()["Body"].read()
         except self._bucket.meta.client.exceptions.NoSuchKey as e:
-            data = b"".join([b"\x00"] * self._block_size)
+            data = self._empty_block_bytes
 
         assert type(data) is bytes
         assert len(data) == self._block_size
