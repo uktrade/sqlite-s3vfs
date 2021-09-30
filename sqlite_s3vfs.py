@@ -26,11 +26,11 @@ class S3VFS(apsw.VFS):
         self.bucket.objects.filter(Prefix=filename).delete()
 
     def xOpen(self, name, flags):
-        return S3VFSFile(self.basevfs, name, flags, self.bucket)
+        return S3VFSFile(name, flags, self.bucket)
 
 
 class S3VFSFile:
-    def __init__(self, inheritfromvfsname, name, flags, bucket):
+    def __init__(self, name, flags, bucket):
         if isinstance(name, apsw.URIFilename):
             self.key = name.filename()
         else:
