@@ -108,14 +108,3 @@ class S3VFSFile:
             self.block_object(block).put(
                 Body=new_data,
             )
-
-
-# session = boto3.Session(profile_name='data_flow_bucket')
-
-# s3vfs = S3VFS(
-#     s3=session.resource('s3'),
-#     bucket=s3.Bucket('MY-BUCKET-NAME'),
-# )
-
-# db=apsw.Connection("/a-test/cool.db", vfs=s3vfs.vfsname)
-# db.cursor().execute("create table foo(x,y); insert into foo values(1,2)")
