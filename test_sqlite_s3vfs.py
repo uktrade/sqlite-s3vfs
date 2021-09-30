@@ -23,14 +23,18 @@ def bucket():
 
 
 @pytest.mark.parametrize(
+    'page_size', SIZES
+)
+@pytest.mark.parametrize(
     'block_size', SIZES
 )
-def test_dummy(bucket, block_size):
+def test_dummy(bucket, page_size, block_size):
     s3vfs = S3VFS(bucket=bucket, block_size=block_size)
 
     with apsw.Connection("/a-test/cool.db", vfs=s3vfs.name) as db:
         cursor = db.cursor()
-        cursor.execute('''
+        cursor.execute(f'''
+            PRAGMA page_size = {page_size};
             CREATE TABLE foo(x,y);
             INSERT INTO foo VALUES(1,2);
         ''')
