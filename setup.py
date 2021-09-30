@@ -11,7 +11,7 @@ setuptools.setup(
     version='0.0.1',
     author='Department for International Trade',
     author_email='sre@digital.trade.gov.uk',
-    description='Virtual filesystem for SQLite to read and write to S3',
+    description='Virtual filesystem for SQLite to read from and write to S3',
     long_description=long_description(),
     long_description_content_type='text/markdown',
     url='https://github.com/uktrade/sqlite-s3vfs',
