@@ -70,7 +70,6 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
 
         with sqlite3.connect(fp.name) as con:
             cur = con.cursor()
-            cur.execute('PRAGMA page_size = {};'.format(page_size))
             cursor.execute('SELECT * FROM foo;')
 
         assert cursor.fetchall() == [(1, 2)]
