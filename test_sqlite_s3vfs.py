@@ -66,6 +66,7 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
 
     # Query an existing database
     with apsw.Connection("a-test/cool.db", vfs=s3vfs.name) as db:
+        cursor = db.cursor()
         cursor.execute('SELECT * FROM foo;')
 
         assert cursor.fetchall() == [(1, 2)]
