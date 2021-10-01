@@ -49,6 +49,16 @@ def create_db(cursor, page_size, journal_mode):
         ''')
 
 
+def empty_db(cursor):
+    cursor.execute(f'''
+        DROP TABLE foo;
+    ''')
+    for i in range(0, 100):
+        cursor.execute(f'''
+            DROP TABLE foo_{i};
+        ''')
+
+
 @pytest.mark.parametrize(
     'page_size', SIZES
 )
@@ -76,7 +86,6 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
 
         assert cursor.fetchall() == [(1, 2)] * 1000
 
-
     # Serialize a database and query it
     with tempfile.NamedTemporaryFile() as fp:
         for chunk in s3vfs.serialize(key_prefix='a-test/cool.db'):
@@ -92,7 +101,7 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
 
         assert cursor.fetchall() == [(1, 2)] * 1000
 
-    # Serialized form should be the same length as one constructed with sqlite3
+    # Serialized form should be the same length as one constructed with sqlite3...
     with \
             tempfile.NamedTemporaryFile() as fp_s3vfs, \
             tempfile.NamedTemporaryFile() as fp_sqlite3:
@@ -105,5 +114,41 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
         with sqlite3.connect(fp_sqlite3.name) as con:
             cursor = con.cursor()
             create_db(cursor, page_size, journal_mode)
+
+        assert os.path.getsize(fp_s3vfs.name) == os.path.getsize(fp_sqlite3.name)
+
+    # ...including after a VACUUM
+    with apsw.Connection("a-test/cool.db", vfs=s3vfs.name) as db:
+        cursor = db.cursor()
+        empty_db(cursor)
+
+    db = apsw.Connection("a-test/cool.db", vfs=s3vfs.name)
+    cursor = db.cursor()
+    cursor.execute('VACUUM;')
+    db.close()
+
+    with tempfile.NamedTemporaryFile() as fp:
+        for chunk in s3vfs.serialize(key_prefix='a-test/cool.db'):
+            assert bool(chunk)
+            fp.write(chunk)
+
+    with \
+            tempfile.NamedTemporaryFile() as fp_s3vfs, \
+            tempfile.NamedTemporaryFile() as fp_sqlite3:
+
+        for chunk in s3vfs.serialize(key_prefix='a-test/cool.db'):
+            assert bool(chunk)
+            fp_s3vfs.write(chunk)
+        fp_s3vfs.seek(0)
+
+        with sqlite3.connect(fp_sqlite3.name) as con:
+            cursor = con.cursor()
+            create_db(cursor, page_size, journal_mode)
+            empty_db(cursor)
+
+        con = sqlite3.connect(fp_sqlite3.name)
+        cursor = con.cursor()
+        cursor.execute('VACUUM;')
+        con.close()
 
         assert os.path.getsize(fp_s3vfs.name) == os.path.getsize(fp_sqlite3.name)
