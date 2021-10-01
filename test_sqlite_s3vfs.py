@@ -37,7 +37,7 @@ def bucket():
 @pytest.mark.parametrize(
     'journal_mode', JOURNAL_MODES
 )
-def test_dummy(bucket, page_size, block_size, journal_mode):
+def test_s3vfs(bucket, page_size, block_size, journal_mode):
     s3vfs = S3VFS(bucket=bucket, block_size=block_size)
 
     with apsw.Connection("a-test/cool.db", vfs=s3vfs.name) as db:
