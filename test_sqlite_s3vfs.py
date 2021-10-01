@@ -40,6 +40,7 @@ def bucket():
 def test_s3vfs(bucket, page_size, block_size, journal_mode):
     s3vfs = S3VFS(bucket=bucket, block_size=block_size)
 
+    # Create a database and query it
     with apsw.Connection("a-test/cool.db", vfs=s3vfs.name) as db:
         cursor = db.cursor()
         cursor.execute(f'''
@@ -56,11 +57,13 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
 
         assert cursor.fetchall() == [(1, 2)]
 
+    # Query an existing database
     with apsw.Connection("a-test/cool.db", vfs=s3vfs.name) as db:
         cursor.execute('SELECT * FROM foo;')
 
         assert cursor.fetchall() == [(1, 2)]
 
+    # Serialize a database and query it
     with tempfile.NamedTemporaryFile() as fp:
         for chunk in s3vfs.serialize(key_prefix='a-test/cool.db'):
             fp.write(chunk)
