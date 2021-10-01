@@ -28,6 +28,19 @@ def bucket():
     bucket.delete()
 
 
+def create_db(cursor, page_size, journal_mode):
+    cursor.execute(f'''
+        PRAGMA journal_mode = {journal_mode};
+    ''')
+    cursor.execute(f'''
+        PRAGMA page_size = {page_size};
+    ''');
+    cursor.execute(f'''
+        CREATE TABLE foo(x,y);
+        INSERT INTO foo VALUES(1,2);
+    ''')
+
+
 @pytest.mark.parametrize(
     'page_size', SIZES
 )
@@ -43,16 +56,7 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
     # Create a database and query it
     with apsw.Connection("a-test/cool.db", vfs=s3vfs.name) as db:
         cursor = db.cursor()
-        cursor.execute(f'''
-            PRAGMA journal_mode = {journal_mode};
-        ''')
-        cursor.execute(f'''
-            PRAGMA page_size = {page_size};
-        ''');
-        cursor.execute(f'''
-            CREATE TABLE foo(x,y);
-            INSERT INTO foo VALUES(1,2);
-        ''')
+        create_db(cursor, page_size, journal_mode)
         cursor.execute('SELECT * FROM foo;')
 
         assert cursor.fetchall() == [(1, 2)]
