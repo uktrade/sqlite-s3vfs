@@ -37,6 +37,8 @@ def create_db(cursor, page_size, journal_mode):
     ''');
     cursor.execute(f'''
         CREATE TABLE foo(x,y);
+    ''')
+    cursor.execute('''
         INSERT INTO foo VALUES(1,2);
     ''')
 
