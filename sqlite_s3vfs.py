@@ -30,9 +30,9 @@ class S3VFS(apsw.VFS):
 class S3VFSFile:
     def __init__(self, name, flags, bucket, block_size):
         if isinstance(name, apsw.URIFilename):
-            self._key = name.filename()
+            self._key_prefix = name.filename()
         else:
-            self._key = name
+            self._key_prefix = name
         self._bucket = bucket
         self._block_size = block_size
         self._empty_block_bytes = bytes(self._block_size)
@@ -47,7 +47,7 @@ class S3VFSFile:
             offset += consume
 
     def _block_object(self, block):
-        return self._bucket.Object(f'{self._key}/{block:010d}')
+        return self._bucket.Object(f'{self._key_prefix}/{block:010d}')
 
     def _block_bytes(self, block):
         try:
@@ -83,7 +83,7 @@ class S3VFSFile:
         pass
 
     def xFileSize(self):
-        return sum(o.size for o in self._bucket.objects.filter(Prefix=self._key + "/"))
+        return sum(o.size for o in self._bucket.objects.filter(Prefix=self._key_prefix + "/"))
 
     def xSync(self, flags):
         return True
