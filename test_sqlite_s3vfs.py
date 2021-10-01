@@ -1,3 +1,4 @@
+import os
 import tempfile
 import uuid
 
@@ -81,3 +82,18 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
             cursor.execute('SELECT * FROM foo;')
 
         assert cursor.fetchall() == [(1, 2)]
+
+    # Serialized form should be the same length as one constructed with sqlite3
+    with \
+            tempfile.NamedTemporaryFile() as fp_s3vfs, \
+            tempfile.NamedTemporaryFile() as fp_sqlite3:
+
+        for chunk in s3vfs.serialize(key_prefix='a-test/cool.db'):
+            fp_s3vfs.write(chunk)
+        fp_s3vfs.seek(0)
+
+        with sqlite3.connect(fp_sqlite3.name) as con:
+            cursor = con.cursor()
+            create_db(cursor, page_size, journal_mode)
+
+        assert os.path.getsize(fp_s3vfs.name) == os.path.getsize(fp_sqlite3.name)

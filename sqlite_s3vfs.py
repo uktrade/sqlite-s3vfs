@@ -1,4 +1,5 @@
 import uuid
+import struct
 import boto3
 import apsw
 
@@ -30,8 +31,20 @@ class S3VFS(apsw.VFS):
         return S3VFSFile(name, flags, self._bucket, self._block_size)
 
     def serialize(self, key_prefix):
-        for obj in self._bucket.objects.filter(Prefix=key_prefix + '/'):
-            yield from obj.get()['Body'].iter_chunks()
+        bytes_so_far = 0
+
+        for i, obj in enumerate(self._bucket.objects.filter(Prefix=key_prefix + '/')):
+            block_bytes = obj.get()['Body'].read()
+
+            if i == 0:
+                page_size, = struct.Struct('>H').unpack(block_bytes[16:18])
+                page_size = 65536 if page_size == 1 else page_size
+                num_pages, = struct.Struct('>L').unpack(block_bytes[28:32])
+                bytes_expected = page_size * num_pages
+
+            to_yield = min(len(block_bytes), bytes_expected - bytes_so_far)
+            yield block_bytes[:to_yield]
+            bytes_so_far += to_yield
 
 class S3VFSFile:
     def __init__(self, name, flags, bucket, block_size):
