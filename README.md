@@ -34,8 +34,8 @@ key_prefix = 'my/path/cool.sqlite'
 
 # Connect, insert data, and query
 with apsw.Connection(key_prefix, vfs=s3vfs.name) as db:
-	cursor = db.cursor()
-	cursor.execute(f'''
+    cursor = db.cursor()
+    cursor.execute(f'''
         CREATE TABLE foo(x,y);
         INSERT INTO foo VALUES(1,2);
     ''')
@@ -44,7 +44,7 @@ with apsw.Connection(key_prefix, vfs=s3vfs.name) as db:
 
 # Get the serialized form of the sqlite file, say to upload to S3 as a single object
 for chunk in s3vfs.serialize(key_prefix=key_prefix):
-	print(chunk)
+    print(chunk)
 ```
 
 See the [APSW documentation](https://rogerbinns.github.io/apsw/) for more examples.
