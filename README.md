@@ -30,7 +30,7 @@ s3vfs =  sqlite_s3vfs.S3VFS(bucket=bucket)
 
 # sqlite-s3vfs stores many objects under this prefix
 # Note that it's not typical to start a key prefix with '/'
-key_prefix = 'a-test/cool.sqlite'
+key_prefix = 'my/path/cool.sqlite'
 
 # Connect, insert data, and query
 with apsw.Connection(key_prefix, vfs=s3vfs.name) as db:
