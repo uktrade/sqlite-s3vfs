@@ -13,6 +13,39 @@ pip install https://github.com/rogerbinns/apsw/releases/download/3.36.0-r1/apsw-
 ```
 
 
+## Usage
+
+sqlite-s3vfs is an [APSW](https://rogerbinns.github.io/apsw/) virtual filesystem that requires [boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html) for its communication with S3.
+
+```python
+import apsw
+import boto3
+import sqlite_s3vfs
+
+# A boto3 bucket resource
+bucket = boto3.Session().resource('s3').Bucket('my-bucket')
+
+# An S3VFS for that bucket
+s3vfs =  sqlite_s3vfs.S3VFS(bucket=bucket)
+
+# sqlite-s3vfs stores many objects under this prefix
+# Note that it's not typical to start a key prefix with '/'
+key_prefix = 'a-test/cool.sqlite'
+
+# Connect, insert data, and query
+with apsw.Connection(key_prefix, vfs=s3vfs.name) as db:
+	cursor = db.cursor()
+	cursor.execute(f'''
+        CREATE TABLE foo(x,y);
+        INSERT INTO foo VALUES(1,2);
+    ''')
+    cursor.execute('SELECT * FROM foo;')
+    print(cursor.fetchall())
+```
+
+See the [APSW documentation](https://rogerbinns.github.io/apsw/) for more examples.
+
+
 ## Tests
 
 The tests require the dev dependencies and APSW to installed, and MinIO started
