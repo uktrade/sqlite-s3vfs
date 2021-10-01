@@ -12,7 +12,7 @@ class S3VFS(apsw.VFS):
 
     def xAccess(self, pathname, flags):
         if flags == apsw.mapping_access["SQLITE_ACCESS_EXISTS"]:
-            return any(self._bucket.objects.filter(Prefix=pathname))
+            return any(self._bucket.objects.filter(Prefix=pathname + '/'))
         elif flags == apsw.mapping_access["SQLITE_ACCESS_READWRITE"]:
             # something sometihng ACLs
             return True
