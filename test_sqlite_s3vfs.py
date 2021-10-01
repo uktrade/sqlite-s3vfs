@@ -39,9 +39,14 @@ def create_db(cursor, page_size, journal_mode):
     cursor.execute(f'''
         CREATE TABLE foo(x,y);
     ''')
-    cursor.execute('''
-        INSERT INTO foo VALUES(1,2);
+    values_str = ','.join('(1,2)' for _ in range(0, 1000))
+    cursor.execute(f'''
+        INSERT INTO foo VALUES {values_str};
     ''')
+    for i in range(0, 100):
+        cursor.execute(f'''
+            CREATE TABLE foo_{i}(x,y);
+        ''')
 
 
 @pytest.mark.parametrize(
@@ -62,14 +67,15 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
         create_db(cursor, page_size, journal_mode)
         cursor.execute('SELECT * FROM foo;')
 
-        assert cursor.fetchall() == [(1, 2)]
+        assert cursor.fetchall() == [(1, 2)] * 1000
 
     # Query an existing database
     with apsw.Connection("a-test/cool.db", vfs=s3vfs.name) as db:
         cursor = db.cursor()
         cursor.execute('SELECT * FROM foo;')
 
-        assert cursor.fetchall() == [(1, 2)]
+        assert cursor.fetchall() == [(1, 2)] * 1000
+
 
     # Serialize a database and query it
     with tempfile.NamedTemporaryFile() as fp:
@@ -82,7 +88,7 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
             cursor = con.cursor()
             cursor.execute('SELECT * FROM foo;')
 
-        assert cursor.fetchall() == [(1, 2)]
+        assert cursor.fetchall() == [(1, 2)] * 1000
 
     # Serialized form should be the same length as one constructed with sqlite3
     with \
