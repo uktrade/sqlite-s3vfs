@@ -1,7 +1,9 @@
+import tempfile
 import uuid
 
 import apsw
 import boto3
+import sqlite3
 import pytest
 
 from sqlite_s3vfs import S3VFS
@@ -56,5 +58,16 @@ def test_dummy(bucket, page_size, block_size, journal_mode):
 
     with apsw.Connection("a-test/cool.db", vfs=s3vfs.name) as db:
         cursor.execute('SELECT * FROM foo;')
+
+        assert cursor.fetchall() == [(1, 2)]
+
+    with tempfile.NamedTemporaryFile() as fp:
+        for chunk in s3vfs.serialize(key_prefix='a-test/cool.db'):
+            fp.write(chunk)
+
+        with sqlite3.connect(fp.name) as con:
+            cur = con.cursor()
+            cur.execute('PRAGMA page_size = {};'.format(page_size))
+            cursor.execute('SELECT * FROM foo;')
 
         assert cursor.fetchall() == [(1, 2)]

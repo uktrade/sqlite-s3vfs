@@ -20,12 +20,18 @@ class S3VFS(apsw.VFS):
             # something something ACLs
             return True
 
+    def xFullPathname(self, filename):
+        return filename
+
     def xDelete(self, filename, syncdir):
         self._bucket.objects.filter(Prefix=filename).delete()
 
     def xOpen(self, name, flags):
         return S3VFSFile(name, flags, self._bucket, self._block_size)
 
+    def serialize(self, key_prefix):
+        for obj in self._bucket.objects.filter(Prefix=key_prefix + '/'):
+            yield from obj.get()['Body'].iter_chunks()
 
 class S3VFSFile:
     def __init__(self, name, flags, bucket, block_size):

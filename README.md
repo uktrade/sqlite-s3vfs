@@ -41,6 +41,10 @@ with apsw.Connection(key_prefix, vfs=s3vfs.name) as db:
     ''')
     cursor.execute('SELECT * FROM foo;')
     print(cursor.fetchall())
+
+# Get the serialized form of the sqlite file, say to upload to S3 as a single object
+for chunk in s3vfs.serialize(key_prefix=key_prefix):
+	print(chunk)
 ```
 
 See the [APSW documentation](https://rogerbinns.github.io/apsw/) for more examples.
