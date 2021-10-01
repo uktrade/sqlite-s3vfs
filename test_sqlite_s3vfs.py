@@ -80,6 +80,8 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
     # Serialize a database and query it
     with tempfile.NamedTemporaryFile() as fp:
         for chunk in s3vfs.serialize(key_prefix='a-test/cool.db'):
+            # Empty chunks can be treated as EOF, so never output those
+            assert bool(chunk)
             fp.write(chunk)
 
         fp.seek(0)
@@ -96,6 +98,7 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
             tempfile.NamedTemporaryFile() as fp_sqlite3:
 
         for chunk in s3vfs.serialize(key_prefix='a-test/cool.db'):
+            assert bool(chunk)
             fp_s3vfs.write(chunk)
         fp_s3vfs.seek(0)
 
