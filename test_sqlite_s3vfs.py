@@ -72,8 +72,10 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
         for chunk in s3vfs.serialize(key_prefix='a-test/cool.db'):
             fp.write(chunk)
 
+        fp.seek(0)
+
         with sqlite3.connect(fp.name) as con:
-            cur = con.cursor()
+            cursor = con.cursor()
             cursor.execute('SELECT * FROM foo;')
 
         assert cursor.fetchall() == [(1, 2)]
