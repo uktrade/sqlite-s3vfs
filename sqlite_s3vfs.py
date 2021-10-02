@@ -104,16 +104,14 @@ class S3VFSFile:
         data_offset = 0
         for block, start, write in self._blocks(offset, len(data)):
 
-            if write == len(data) == self._block_size:
-                # No need to fetch the original bytes, since we completely replace them
-                new_block_bytes = data
-            else:
+            data_to_write = data[data_offset:data_offset+write]
+
+            if start != 0 or len(data_to_write) != self._block_size:
                 original_block_bytes = self._block_bytes(block)
-                new_block_bytes = (
-                    original_block_bytes[0:start] +
-                    data[data_offset:data_offset+write] +
+                data_to_write = \
+                    original_block_bytes[0:start] + \
+                    data_to_write + \
                     original_block_bytes[start+write:]
-                )
 
             data_offset += write
-            self._block_object(block).put(Body=new_block_bytes)
+            self._block_object(block).put(Body=data_to_write)
