@@ -102,8 +102,7 @@ class S3VFSFile:
             if to_keep == 0:
                 obj.delete()
             elif to_keep < obj.size:
-                block_bytes = obj.get()['Body'].read()
-                obj.put(Body=block_bytes[:to_keep])
+                obj.put(Body=obj.get()['Body'].read()[:to_keep])
 
         return True
 
