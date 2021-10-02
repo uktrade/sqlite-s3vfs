@@ -44,33 +44,26 @@ def transaction(cursor):
 
 
 def create_db(cursor, page_size, journal_mode):
-    cursor.execute(f'''
-        PRAGMA journal_mode = {journal_mode};
-    ''')
-    cursor.execute(f'''
-        PRAGMA page_size = {page_size};
-    ''');
-    cursor.execute(f'''
-        CREATE TABLE foo(x,y);
-    ''')
-    values_str = ','.join('(1,2)' for _ in range(0, 100))
-    cursor.execute(f'''
-        INSERT INTO foo VALUES {values_str};
-    ''')
-    for i in range(0, 10):
-        cursor.execute(f'''
-            CREATE TABLE foo_{i}(x,y);
-        ''')
+    sqls = [
+        f'PRAGMA journal_mode = {journal_mode};',
+        f'PRAGMA page_size = {page_size};',
+        'CREATE TABLE foo(x,y);',
+        'INSERT INTO foo VALUES ' + ','.join('(1,2)' for _ in range(0, 100)) + ';',
+    ] + [
+        f'CREATE TABLE foo_{i}(x,y);' for i in range(0, 10)
+    ]
+    for sql in sqls:
+        cursor.execute(sql)
 
 
 def empty_db(cursor):
-    cursor.execute(f'''
-        DROP TABLE foo;
-    ''')
-    for i in range(0, 10):
-        cursor.execute(f'''
-            DROP TABLE foo_{i};
-        ''')
+    sqls = [
+        'DROP TABLE foo;'
+    ] + [
+        f'DROP TABLE foo_{i};' for i in range(0, 10)
+    ]
+    for sql in sqls:
+        cursor.execute(sql)
 
 
 @pytest.mark.parametrize(
