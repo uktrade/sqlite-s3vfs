@@ -108,7 +108,7 @@ class S3VFSFile:
         return True
 
     def xTruncate(self, newsize):
-        num_blocks = newsize // self._block_size
+        num_blocks = (newsize + self._block_size - 1) // self._block_size
         for obj in self._bucket.objects.filter(Prefix=self._key_prefix + "/"):
             block = int(obj.key[-10:])
             if block >= num_blocks:
