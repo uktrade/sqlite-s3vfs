@@ -31,20 +31,8 @@ class S3VFS(apsw.VFS):
         return S3VFSFile(name, flags, self._bucket, self._block_size)
 
     def serialize(self, key_prefix):
-        bytes_so_far = 0
-
-        for i, obj in enumerate(self._bucket.objects.filter(Prefix=key_prefix + '/')):
-            block_bytes = obj.get()['Body'].read()
-
-            if i == 0:
-                page_size, = struct.Struct('>H').unpack(block_bytes[16:18])
-                page_size = 65536 if page_size == 1 else page_size
-                num_pages, = struct.Struct('>L').unpack(block_bytes[28:32])
-                bytes_expected = page_size * num_pages
-
-            to_yield = min(len(block_bytes), bytes_expected - bytes_so_far)
-            yield block_bytes[:to_yield]
-            bytes_so_far += to_yield
+        for obj in self._bucket.objects.filter(Prefix=key_prefix + '/'):
+            yield from obj.get()['Body'].iter_chunks()
 
 class S3VFSFile:
     def __init__(self, name, flags, bucket, block_size):
@@ -54,7 +42,6 @@ class S3VFSFile:
             self._key_prefix = name
         self._bucket = bucket
         self._block_size = block_size
-        self._empty_block_bytes = bytes(self._block_size)
 
     def _blocks(self, offset, amount):
         while amount > 0:
@@ -72,10 +59,8 @@ class S3VFSFile:
         try:
             block_bytes = self._block_object(block).get()["Body"].read()
         except self._bucket.meta.client.exceptions.NoSuchKey as e:
-            block_bytes = self._empty_block_bytes
+            block_bytes = b''
 
-        assert type(block_bytes) is bytes
-        assert len(block_bytes) == self._block_size
         return block_bytes
 
     def xRead(self, amount, offset):
@@ -132,8 +117,6 @@ class S3VFSFile:
                     original_block_bytes[start+write:],
                 ])
             data_offset += write
-
-            assert len(new_block_bytes) == self._block_size
 
             self._block_object(block).put(
                 Body=new_block_bytes,
