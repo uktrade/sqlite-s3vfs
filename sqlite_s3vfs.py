@@ -34,12 +34,12 @@ class S3VFS(apsw.VFS):
         for obj in self._bucket.objects.filter(Prefix=key_prefix + '/'):
             yield from obj.get()['Body'].iter_chunks()
 
+
 class S3VFSFile:
     def __init__(self, name, flags, bucket, block_size):
-        if isinstance(name, apsw.URIFilename):
-            self._key_prefix = name.filename()
-        else:
-            self._key_prefix = name
+        self._key_prefix = \
+            self._key_prefix = name.filename() if isinstance(name, apsw.URIFilename) else \
+            name
         self._bucket = bucket
         self._block_size = block_size
 
@@ -93,11 +93,18 @@ class S3VFSFile:
         return True
 
     def xTruncate(self, newsize):
-        num_blocks = (newsize + self._block_size - 1) // self._block_size
+        total = 0
+
         for obj in self._bucket.objects.filter(Prefix=self._key_prefix + "/"):
-            block = int(obj.key[-10:])
-            if block >= num_blocks:
+            total += obj.size
+            to_keep = max(obj.size - total + newsize, 0)
+
+            if to_keep <= 0:
                 obj.delete()
+            elif to_keep < obj.size:
+                block_bytes = obj.get()['Body'].read()
+                obj.put(Body=block_bytes[:to_keep])
+
         return True
 
     def xWrite(self, data, offset):
