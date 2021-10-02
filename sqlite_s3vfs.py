@@ -25,7 +25,7 @@ class S3VFS(apsw.VFS):
         return filename
 
     def xDelete(self, filename, syncdir):
-        self._bucket.objects.filter(Prefix=filename).delete()
+        self._bucket.objects.filter(Prefix=filename + '/').delete()
 
     def xOpen(self, name, flags):
         return S3VFSFile(name, flags, self._bucket, self._block_size)
