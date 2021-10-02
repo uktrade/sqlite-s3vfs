@@ -10,8 +10,8 @@ import pytest
 
 from sqlite_s3vfs import S3VFS
 
-
-SIZES = [512, 1024, 2048, 4096, 8192, 16384, 32768, 65536]
+PAGE_SIZES = [512, 1024, 2048, 4096, 8192, 16384, 32768, 65536]
+BLOCK_SIZES = [4095, 4096, 4097]
 JOURNAL_MODES = ['DELETE', 'TRUNCATE', 'PERSIST', 'MEMORY', 'OFF']
 
 
@@ -74,10 +74,10 @@ def empty_db(cursor):
 
 
 @pytest.mark.parametrize(
-    'page_size', SIZES
+    'page_size', PAGE_SIZES
 )
 @pytest.mark.parametrize(
-    'block_size', SIZES
+    'block_size', BLOCK_SIZES
 )
 @pytest.mark.parametrize(
     'journal_mode', JOURNAL_MODES
