@@ -99,7 +99,7 @@ class S3VFSFile:
             total += obj.size
             to_keep = max(obj.size - total + newsize, 0)
 
-            if to_keep <= 0:
+            if to_keep == 0:
                 obj.delete()
             elif to_keep < obj.size:
                 block_bytes = obj.get()['Body'].read()
