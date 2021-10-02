@@ -1,6 +1,7 @@
 import os
 import tempfile
 import uuid
+from contextlib import closing, contextmanager
 
 import apsw
 import boto3
@@ -29,6 +30,17 @@ def bucket():
     bucket.delete()
 
 
+@contextmanager
+def transaction(cursor):
+    cursor.execute('BEGIN;')
+    try:
+        yield cursor
+    except:
+        raise
+    else:
+        cursor.execute('COMMIT;')
+
+
 def create_db(cursor, page_size, journal_mode):
     cursor.execute(f'''
         PRAGMA journal_mode = {journal_mode};
@@ -39,11 +51,11 @@ def create_db(cursor, page_size, journal_mode):
     cursor.execute(f'''
         CREATE TABLE foo(x,y);
     ''')
-    values_str = ','.join('(1,2)' for _ in range(0, 1000))
+    values_str = ','.join('(1,2)' for _ in range(0, 100))
     cursor.execute(f'''
         INSERT INTO foo VALUES {values_str};
     ''')
-    for i in range(0, 100):
+    for i in range(0, 10):
         cursor.execute(f'''
             CREATE TABLE foo_{i}(x,y);
         ''')
@@ -53,7 +65,7 @@ def empty_db(cursor):
     cursor.execute(f'''
         DROP TABLE foo;
     ''')
-    for i in range(0, 100):
+    for i in range(0, 10):
         cursor.execute(f'''
             DROP TABLE foo_{i};
         ''')
@@ -72,83 +84,71 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
     s3vfs = S3VFS(bucket=bucket, block_size=block_size)
 
     # Create a database and query it
-    with apsw.Connection("a-test/cool.db", vfs=s3vfs.name) as db:
-        cursor = db.cursor()
+    with \
+            closing(apsw.Connection("a-test/cool.db", vfs=s3vfs.name)) as db, \
+            transaction(db.cursor()) as cursor:
+
         create_db(cursor, page_size, journal_mode)
         cursor.execute('SELECT * FROM foo;')
-
-        assert cursor.fetchall() == [(1, 2)] * 1000
+        assert cursor.fetchall() == [(1, 2)] * 100
 
     # Query an existing database
-    with apsw.Connection("a-test/cool.db", vfs=s3vfs.name) as db:
+    with \
+            closing(apsw.Connection("a-test/cool.db", vfs=s3vfs.name)) as db, \
+            transaction(db.cursor()) as cursor:
+
         cursor = db.cursor()
         cursor.execute('SELECT * FROM foo;')
 
-        assert cursor.fetchall() == [(1, 2)] * 1000
+        assert cursor.fetchall() == [(1, 2)] * 100
 
     # Serialize a database and query it
-    with tempfile.NamedTemporaryFile() as fp:
-        for chunk in s3vfs.serialize(key_prefix='a-test/cool.db'):
-            # Empty chunks can be treated as EOF, so never output those
-            assert bool(chunk)
-            fp.write(chunk)
-
-        fp.seek(0)
-
-        with sqlite3.connect(fp.name) as con:
-            cursor = con.cursor()
-            cursor.execute('SELECT * FROM foo;')
-
-        assert cursor.fetchall() == [(1, 2)] * 1000
-
-    # Serialized form should be the same length as one constructed with sqlite3...
     with \
             tempfile.NamedTemporaryFile() as fp_s3vfs, \
             tempfile.NamedTemporaryFile() as fp_sqlite3:
 
         for chunk in s3vfs.serialize(key_prefix='a-test/cool.db'):
+            # Empty chunks can be treated as EOF, so never output those
             assert bool(chunk)
             fp_s3vfs.write(chunk)
-        fp_s3vfs.seek(0)
 
-        with sqlite3.connect(fp_sqlite3.name) as con:
-            cursor = con.cursor()
+        fp_s3vfs.flush()
+
+        with \
+                closing(sqlite3.connect(fp_s3vfs.name)) as db, \
+                transaction(db.cursor()) as cursor:
+
+            cursor.execute('SELECT * FROM foo;')
+            assert cursor.fetchall() == [(1, 2)] * 100
+
+        # Serialized form should be the same length as one constructed with sqlite3...
+        with \
+                closing(sqlite3.connect(fp_sqlite3.name)) as db, \
+                transaction(db.cursor()) as cursor:
+
             create_db(cursor, page_size, journal_mode)
 
         assert os.path.getsize(fp_s3vfs.name) == os.path.getsize(fp_sqlite3.name)
 
-    # ...including after a VACUUM
-    with apsw.Connection("a-test/cool.db", vfs=s3vfs.name) as db:
-        cursor = db.cursor()
-        empty_db(cursor)
+        # ...including after a VACUUM (which cannot be in a transaction)
+        with closing(apsw.Connection("a-test/cool.db", vfs=s3vfs.name)) as db:
+            with transaction(db.cursor()) as cursor:
+                empty_db(cursor)
+            db.cursor().execute('VACUUM;')
 
-    db = apsw.Connection("a-test/cool.db", vfs=s3vfs.name)
-    cursor = db.cursor()
-    cursor.execute('VACUUM;')
-    db.close()
-
-    with tempfile.NamedTemporaryFile() as fp:
-        for chunk in s3vfs.serialize(key_prefix='a-test/cool.db'):
-            assert bool(chunk)
-            fp.write(chunk)
-
-    with \
-            tempfile.NamedTemporaryFile() as fp_s3vfs, \
-            tempfile.NamedTemporaryFile() as fp_sqlite3:
+        fp_s3vfs.truncate(0)
+        fp_s3vfs.seek(0)
 
         for chunk in s3vfs.serialize(key_prefix='a-test/cool.db'):
             assert bool(chunk)
             fp_s3vfs.write(chunk)
-        fp_s3vfs.seek(0)
 
-        with sqlite3.connect(fp_sqlite3.name) as con:
-            cursor = con.cursor()
-            create_db(cursor, page_size, journal_mode)
-            empty_db(cursor)
+        fp_s3vfs.flush()
 
-        con = sqlite3.connect(fp_sqlite3.name)
-        cursor = con.cursor()
-        cursor.execute('VACUUM;')
-        con.close()
+        with closing(sqlite3.connect(fp_sqlite3.name)) as db:
+            with transaction(db.cursor()) as cursor:
+                empty_db(cursor)
+
+            db.cursor().execute('VACUUM;')
 
         assert os.path.getsize(fp_s3vfs.name) == os.path.getsize(fp_sqlite3.name)
