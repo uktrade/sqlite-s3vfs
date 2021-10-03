@@ -50,10 +50,10 @@ See the [APSW documentation](https://rogerbinns.github.io/apsw/) for more exampl
 
 ### Serializing (getting a regular SQLite file out of the VFS)
 
-The bytes corresponding to a regular SQLite file can be extracted with the `serialize` function, which returns an iterable.
+The bytes corresponding to a regular SQLite file can be extracted with the `serialize_iter` function, which returns an iterable.
 
 ```python
-for chunk in s3vfs.serialize(key_prefix=key_prefix):
+for chunk in s3vfs.serialize_iter(key_prefix=key_prefix):
     print(chunk)
 ```
 

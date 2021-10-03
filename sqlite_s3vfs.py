@@ -30,7 +30,7 @@ class S3VFS(apsw.VFS):
     def xOpen(self, name, flags):
         return S3VFSFile(name, flags, self._bucket, self._block_size)
 
-    def serialize(self, key_prefix):
+    def serialize_iter(self, key_prefix):
         for obj in self._bucket.objects.filter(Prefix=key_prefix + '/'):
             yield from obj.get()['Body'].iter_chunks()
 
