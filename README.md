@@ -9,6 +9,8 @@ No locking is performed, so client code _must_ ensure that writes do not overlap
 
 sqlite-s3vfs stores the SQLite database in fixed-sized _blocks_, and each is stored as a separate object in S3. SQLite stores its data in fixed-size _pages_, and always writes exactly a page at a time. This virtual filesystem translates  pages reads and writes to block reads and writes. In the case of SQLite pages being the same size blocks, which is the case by default, each page write results in exactly one block write.
 
+Separate objects are required since S3 does not support the partial replace of an object; to change even 1 byte, it much be re-uploaded in full.
+
 
 ## Installation
 
