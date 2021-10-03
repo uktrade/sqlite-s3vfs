@@ -2,7 +2,7 @@
 
 Virtual filesystem for SQLite to read from and write to S3.
 
-No locking is performed, so client code _must_ ensure that writes do not overlap with other writes or reads. If multiple writes happen at the same time, the database will probably become corrupt and data lost.
+No locking is performed, so client code _must_ ensure that writes do not overlap with other writes or reads. If multiple writes happen at the same time, the database will probably become corrupt and data be lost.
 
 
 ## How does it work?
