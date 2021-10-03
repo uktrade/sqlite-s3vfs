@@ -34,6 +34,37 @@ class S3VFS(apsw.VFS):
         for obj in self._bucket.objects.filter(Prefix=key_prefix + '/'):
             yield from obj.get()['Body'].iter_chunks()
 
+    def deserialize_iter(self, key_prefix, bytes_iter):
+        chunk = b''
+        offset = 0
+        it = iter(bytes_iter)
+
+        def up_to_iter(num):
+            nonlocal chunk, offset
+
+            while num:
+                if offset == len(chunk):
+                    try:
+                        chunk = next(it)
+                    except StopIteration:
+                        break
+                    else:
+                        offset = 0
+                to_yield = min(num, len(chunk) - offset)
+                offset = offset + to_yield
+                num -= to_yield
+                yield chunk[offset - to_yield:offset]
+
+        def block_bytes_iter():
+            while True:
+                block = b''.join(up_to_iter(self._block_size))
+                if not block:
+                    break
+                yield block
+
+        for block, block_bytes in enumerate(block_bytes_iter()):
+            self._bucket.Object(f'{key_prefix}/{block:010d}').put(Body=block_bytes)
+
 
 class S3VFSFile:
     def __init__(self, name, flags, bucket, block_size):

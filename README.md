@@ -58,6 +58,18 @@ for chunk in s3vfs.serialize_iter(key_prefix=key_prefix):
 ```
 
 
+### Deserializing (getting a regular SQLite file into the VFS)
+
+```python
+# Any iterable that yields bytes can be used. In this example, bytes come from
+# a regular SQLite file already in S3
+source_obj = boto3.Session().resource('s3').Object('my-source-bucket', 'source/cool.sqlite')
+bytes_iter = source_obj.get()['Body'].iter_chunks()
+
+s3vfs.deserialize_iter(key_prefix='my/path/cool.sqlite', bytes_iter=bytes_iter)
+```
+
+
 ## Tests
 
 The tests require the dev dependencies and APSW to installed, and MinIO started

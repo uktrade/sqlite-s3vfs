@@ -147,3 +147,33 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
             db.cursor().execute('VACUUM;')
 
         assert os.path.getsize(fp_s3vfs.name) == os.path.getsize(fp_sqlite3.name)
+
+@pytest.mark.parametrize(
+    'page_size', PAGE_SIZES
+)
+@pytest.mark.parametrize(
+    'block_size', BLOCK_SIZES
+)
+@pytest.mark.parametrize(
+    'journal_mode', JOURNAL_MODES
+)
+def test_deserialize_iter(bucket, page_size, block_size, journal_mode):
+    s3vfs = S3VFS(bucket=bucket, block_size=block_size)
+
+    with tempfile.NamedTemporaryFile() as fp_sqlite3:
+        with \
+                closing(sqlite3.connect(fp_sqlite3.name)) as db, \
+                transaction(db.cursor()) as cursor:
+
+            create_db(cursor, page_size, journal_mode)
+
+        s3vfs.deserialize_iter(key_prefix='another-test/cool.db', bytes_iter=fp_sqlite3)
+
+    with \
+            closing(apsw.Connection('another-test/cool.db', vfs=s3vfs.name)) as db, \
+            transaction(db.cursor()) as cursor:
+
+        cursor = db.cursor()
+        cursor.execute('SELECT * FROM foo;')
+
+        assert cursor.fetchall() == [(1, 2)] * 100
