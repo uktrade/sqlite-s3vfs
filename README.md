@@ -5,6 +5,11 @@ Virtual filesystem for SQLite to read from and write to S3.
 No locking is performed, so client code _must_ ensure that writes overlap with neither other writes nor reads. If multiple writes happen at the same time, the database will probably become corrupt and data lost.
 
 
+## How does it work?
+
+sqlite-s3vfs stores the SQLite database in fixed-sized _blocks_, and each is stored as a separate object in S3. SQLite stores its data in fixed-size _pages_, and always writes exactly a page at a time. This virtual filesystem translates  pages reads and writes to block reads and writes. In the case of SQLite pages being the same size blocks, which is the case by default, each page write results in exactly one block write.
+
+
 ## Installation
 
 sqlite-s3vfs depends on [APSW](https://github.com/rogerbinns/apsw), which is not officially available on PyPI, but can be installed directly from GitHub.
