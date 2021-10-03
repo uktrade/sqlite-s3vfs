@@ -34,6 +34,36 @@ class S3VFS(apsw.VFS):
         for obj in self._bucket.objects.filter(Prefix=key_prefix + '/'):
             yield from obj.get()['Body'].iter_chunks()
 
+    def serialize_fileobj(self, key_prefix):
+        chunk = b''
+        offset = 0
+        it = iter(self.serialize_iter(key_prefix))
+
+        def up_to_iter(num):
+            nonlocal chunk, offset
+
+            while num:
+                if offset == len(chunk):
+                    try:
+                        chunk = next(it)
+                    except StopIteration:
+                        break
+                    else:
+                        offset = 0
+                to_yield = min(num, len(chunk) - offset)
+                offset = offset + to_yield
+                num -= to_yield
+                yield chunk[offset - to_yield:offset]
+
+        class FileLikeObj:
+            def read(self, n=-1):
+                n = \
+                    n if n != -1 else \
+                    4294967294 * 65536  # max size of SQLite file
+                return b''.join(up_to_iter(n))
+
+        return FileLikeObj()
+
     def deserialize_iter(self, key_prefix, bytes_iter):
         chunk = b''
         offset = 0

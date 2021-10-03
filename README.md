@@ -50,11 +50,18 @@ See the [APSW documentation](https://rogerbinns.github.io/apsw/) for more exampl
 
 ### Serializing (getting a regular SQLite file out of the VFS)
 
-The bytes corresponding to a regular SQLite file can be extracted with the `serialize_iter` function, which returns an iterable.
+The bytes corresponding to a regular SQLite file can be extracted with the `serialize_iter` function, which returns an iterable,
 
 ```python
 for chunk in s3vfs.serialize_iter(key_prefix=key_prefix):
     print(chunk)
+```
+
+or with `serialize_fileobj`, which returns a non-seekable file-like object. This can be passed to Boto3's `upload_fileobj` method to upload a regular SQLite file to S3.
+
+```python
+target_obj = boto3.Session().resource('s3').Bucket('my-target-bucket').Object('target/cool.sqlite')
+target_obj.upload_fileobj(s3vfs.serialize_fileobj(key_prefix=key_prefix))
 ```
 
 
@@ -63,7 +70,7 @@ for chunk in s3vfs.serialize_iter(key_prefix=key_prefix):
 ```python
 # Any iterable that yields bytes can be used. In this example, bytes come from
 # a regular SQLite file already in S3
-source_obj = boto3.Session().resource('s3').Object('my-source-bucket', 'source/cool.sqlite')
+source_obj = boto3.Session().resource('s3').Bucket('my-source-bucket').Object('source/cool.sqlite')
 bytes_iter = source_obj.get()['Body'].iter_chunks()
 
 s3vfs.deserialize_iter(key_prefix='my/path/cool.sqlite', bytes_iter=bytes_iter)
