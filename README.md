@@ -1,6 +1,8 @@
 # sqlite-s3vfs [![CircleCI](https://circleci.com/gh/uktrade/sqlite-s3vfs.svg?style=shield)](https://circleci.com/gh/uktrade/sqlite-s3vfs) [![Test Coverage](https://api.codeclimate.com/v1/badges/6df8a84b0ff21d7ecf22/test_coverage)](https://codeclimate.com/github/uktrade/sqlite-s3vfs/test_coverage)
 
-Virtual filesystem for SQLite to read from and write to S3
+Virtual filesystem for SQLite to read from and write to S3.
+
+No locking is performed, so client code _must_ ensure that writes overlap with neither other writes nor reads. If multiple writes happen at the same time, the database will probably become corrupt and data lost.
 
 
 ## Installation
@@ -41,13 +43,19 @@ with apsw.Connection(key_prefix, vfs=s3vfs.name) as db:
     ''')
     cursor.execute('SELECT * FROM foo;')
     print(cursor.fetchall())
-
-# Get the serialized form of the sqlite file, say to upload to S3 as a single object
-for chunk in s3vfs.serialize(key_prefix=key_prefix):
-    print(chunk)
 ```
 
 See the [APSW documentation](https://rogerbinns.github.io/apsw/) for more examples.
+
+
+### Serializing (getting a regular SQLite file out of the VFS)
+
+The bytes corresponding to a regular SQLite file can be extracted with the `serialize` function, which returns an iterable.
+
+```python
+for chunk in s3vfs.serialize(key_prefix=key_prefix):
+    print(chunk)
+```
 
 
 ## Tests
