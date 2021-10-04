@@ -102,6 +102,6 @@ pytest
 
 and finally Minio stopped
 
-```
+```bash
 ./stop-minio.sh
 ```
