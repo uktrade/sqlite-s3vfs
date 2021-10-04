@@ -35,7 +35,7 @@ import sqlite_s3vfs
 bucket = boto3.Session().resource('s3').Bucket('my-bucket')
 
 # An S3VFS for that bucket
-s3vfs =  sqlite_s3vfs.S3VFS(bucket=bucket)
+s3vfs = sqlite_s3vfs.S3VFS(bucket=bucket)
 
 # sqlite-s3vfs stores many objects under this prefix
 # Note that it's not typical to start a key prefix with '/'
@@ -101,6 +101,7 @@ pytest
 ```
 
 and finally Minio stopped
+
 ```
 ./stop-minio.sh
 ```
