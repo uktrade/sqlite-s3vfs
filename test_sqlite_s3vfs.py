@@ -43,10 +43,17 @@ def transaction(cursor):
         cursor.execute('COMMIT;')
 
 
-def create_db(cursor, page_size, journal_mode):
+def set_pragmas(cursor, page_size, journal_mode):
     sqls = [
         f'PRAGMA journal_mode = {journal_mode};',
         f'PRAGMA page_size = {page_size};',
+    ]
+    for sql in sqls:
+        cursor.execute(sql)
+
+
+def create_db(cursor):
+    sqls = [
         'CREATE TABLE foo(x,y);',
         'INSERT INTO foo VALUES ' + ','.join('(1,2)' for _ in range(0, 100)) + ';',
     ] + [
@@ -79,11 +86,12 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
     s3vfs = S3VFS(bucket=bucket, block_size=block_size)
 
     # Create a database and query it
-    with \
-            closing(apsw.Connection("a-test/cool.db", vfs=s3vfs.name)) as db, \
-            transaction(db.cursor()) as cursor:
+    with closing(apsw.Connection("a-test/cool.db", vfs=s3vfs.name)) as db:
+        set_pragmas(db.cursor(), page_size, journal_mode)
 
-        create_db(cursor, page_size, journal_mode)
+        with transaction(db.cursor()) as cursor:
+            create_db(cursor)
+
         cursor.execute('SELECT * FROM foo;')
         assert cursor.fetchall() == [(1, 2)] * 100
 
@@ -133,12 +141,12 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
             cursor.execute('SELECT * FROM foo;')
             assert cursor.fetchall() == [(1, 2)] * 100
 
-        # Serialized form should be the same length as one constructed with sqlite3...
-        with \
-                closing(sqlite3.connect(fp_sqlite3.name)) as db, \
-                transaction(db.cursor()) as cursor:
+        # Serialized form should be the same length as one constructed without the VFS...
+        with closing(sqlite3.connect(fp_sqlite3.name)) as db:
+            set_pragmas(db.cursor(), page_size, journal_mode)
 
-            create_db(cursor, page_size, journal_mode)
+            with transaction(db.cursor()) as cursor:
+                create_db(cursor)
 
         assert os.path.getsize(fp_s3vfs.name) == os.path.getsize(fp_sqlite3.name)
 
@@ -165,6 +173,7 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
 
         assert os.path.getsize(fp_s3vfs.name) == os.path.getsize(fp_sqlite3.name)
 
+
 @pytest.mark.parametrize(
     'page_size', PAGE_SIZES
 )
@@ -178,11 +187,11 @@ def test_deserialize_iter(bucket, page_size, block_size, journal_mode):
     s3vfs = S3VFS(bucket=bucket, block_size=block_size)
 
     with tempfile.NamedTemporaryFile() as fp_sqlite3:
-        with \
-                closing(sqlite3.connect(fp_sqlite3.name)) as db, \
-                transaction(db.cursor()) as cursor:
+        with closing(sqlite3.connect(fp_sqlite3.name)) as db:
+            set_pragmas(db.cursor(), page_size, journal_mode)
 
-            create_db(cursor, page_size, journal_mode)
+            with transaction(db.cursor()) as cursor:
+                create_db(cursor)
 
         s3vfs.deserialize_iter(key_prefix='another-test/cool.db', bytes_iter=fp_sqlite3)
 
