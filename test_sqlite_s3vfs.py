@@ -45,8 +45,8 @@ def transaction(cursor):
 
 def set_pragmas(cursor, page_size, journal_mode):
     sqls = [
-        f'PRAGMA journal_mode = {journal_mode};',
         f'PRAGMA page_size = {page_size};',
+        f'PRAGMA journal_mode = {journal_mode};',
     ]
     for sql in sqls:
         cursor.execute(sql)
