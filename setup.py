@@ -8,7 +8,7 @@ def long_description():
 
 setuptools.setup(
     name='sqlite-s3vfs',
-    version='0.0.17',
+    version='0.0.18',
     author='Department for International Trade',
     author_email='sre@digital.trade.gov.uk',
     description='Virtual filesystem for SQLite to read from and write to S3',
