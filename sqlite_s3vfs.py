@@ -1,6 +1,4 @@
 import uuid
-import struct
-import boto3
 import apsw
 
 
