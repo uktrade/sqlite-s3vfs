@@ -1,2 +1,3 @@
 -e file:.#egg=sqlite-s3vfs
+coverage
 pytest
