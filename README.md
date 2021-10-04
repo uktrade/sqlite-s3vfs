@@ -18,7 +18,7 @@ sqlite-s3vfs depends on [APSW](https://github.com/rogerbinns/apsw), which is not
 
 ```bash
 pip install sqlite-s3vfs
-pip install https://github.com/rogerbinns/apsw/releases/download/3.36.0-r1/apsw-3.36.0-r1.zip --global-option=fetch --global-option=--version --global-option=3.36.0 --global-option=--all --global-option=build --global-option=--enable-all-extensions
+pip install https://github.com/rogerbinns/apsw/releases/download/3.36.0-r1/apsw-3.36.0-r1.zip --global-option=fetch --global-option=--version --global-option=3.36.0 --global-option=--sqlite --global-option=build --global-option=--enable-all-extensions
 ```
 
 
