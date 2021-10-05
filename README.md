@@ -4,7 +4,7 @@ Python virtual filesystem for SQLite to read from and write to S3.
 
 No locking is performed, so client code _must_ ensure that writes do not overlap with other writes or reads. If multiple writes happen at the same time, the database will probably become corrupt and data be lost.
 
-Inspired by [phiresky's sql.js-httpvfs](https://github.com/phiresky/sql.js-httpvfs), [dacort's Stack Overflow answer](https://stackoverflow.com/a/59434097/1319998), and [sqlite-s3-query](https://github.com/michalc/sqlite-s3-query).
+Based on [simonwo's gist](https://gist.github.com/simonwo/b98dc75feb4b53ada46f224a3b26274c), and inspired by [phiresky's sql.js-httpvfs](https://github.com/phiresky/sql.js-httpvfs), [dacort's Stack Overflow answer](https://stackoverflow.com/a/59434097/1319998), and [michalc's sqlite-s3-query](https://github.com/michalc/sqlite-s3-query).
 
 
 ## How does it work?
