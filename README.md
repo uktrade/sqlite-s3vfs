@@ -23,11 +23,13 @@ pip install sqlite-s3vfs
 pip install https://github.com/rogerbinns/apsw/releases/download/3.36.0-r1/apsw-3.36.0-r1.zip --global-option=fetch --global-option=--version --global-option=3.36.0 --global-option=--sqlite --global-option=build --global-option=--enable-all-extensions
 ```
 
-Installing APSW from GitHub can be difficult on some platforms since it involves compiling a Python extension and (depending on options chosen) SQLite itself. As an alternative, sqlite-s3vfs should work with [apsw-wheels](https://pypi.org/project/apsw-wheels/), but at the time of writing it has no official relationship with APSW.
+Installing APSW from GitHub can be difficult on some platforms since it involves compiling a Python extension and (depending on options chosen) SQLite itself. As an alternative, sqlite-s3vfs should work with [apsw-wheels](https://pypi.org/project/apsw-wheels/), which includes binaries for various platforms.
 
 ```bash
 pip install apsw-wheels
 ```
+
+However, at the time of writing aspw-wheels has no official relationship with APSW.
 
 
 ## Usage
