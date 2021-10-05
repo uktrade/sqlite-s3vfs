@@ -95,6 +95,9 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
         cursor.execute('SELECT * FROM foo;')
         assert cursor.fetchall() == [(1, 2)] * 100
 
+        cursor.execute('PRAGMA integrity_check;')
+        assert cursor.fetchall() == [('ok',)]
+
     # Query an existing database
     with \
             closing(apsw.Connection("a-test/cool.db", vfs=s3vfs.name)) as db, \
@@ -104,6 +107,9 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
         cursor.execute('SELECT * FROM foo;')
 
         assert cursor.fetchall() == [(1, 2)] * 100
+
+        cursor.execute('PRAGMA integrity_check;')
+        assert cursor.fetchall() == [('ok',)]
 
     # Serialize a database with serialize_fileobj, upload to S3, download it, and query it
     with \
@@ -121,6 +127,9 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
 
             cursor.execute('SELECT * FROM foo;')
             assert cursor.fetchall() == [(1, 2)] * 100
+
+            cursor.execute('PRAGMA integrity_check;')
+            assert cursor.fetchall() == [('ok',)]
 
     # Serialize a database with serialize_iter and query it
     with \
@@ -141,12 +150,18 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
             cursor.execute('SELECT * FROM foo;')
             assert cursor.fetchall() == [(1, 2)] * 100
 
+            cursor.execute('PRAGMA integrity_check;')
+            assert cursor.fetchall() == [('ok',)]
+
         # Serialized form should be the same length as one constructed without the VFS...
         with closing(sqlite3.connect(fp_sqlite3.name)) as db:
             set_pragmas(db.cursor(), page_size, journal_mode)
 
             with transaction(db.cursor()) as cursor:
                 create_db(cursor)
+
+            cursor.execute('PRAGMA integrity_check;')
+            assert cursor.fetchall() == [('ok',)]
 
         assert os.path.getsize(fp_s3vfs.name) == os.path.getsize(fp_sqlite3.name)
 
@@ -155,6 +170,9 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
             with transaction(db.cursor()) as cursor:
                 empty_db(cursor)
             db.cursor().execute('VACUUM;')
+
+            cursor.execute('PRAGMA integrity_check;')
+            assert cursor.fetchall() == [('ok',)]
 
         fp_s3vfs.truncate(0)
         fp_s3vfs.seek(0)
@@ -170,6 +188,9 @@ def test_s3vfs(bucket, page_size, block_size, journal_mode):
                 empty_db(cursor)
 
             db.cursor().execute('VACUUM;')
+
+            cursor.execute('PRAGMA integrity_check;')
+            assert cursor.fetchall() == [('ok',)]
 
         assert os.path.getsize(fp_s3vfs.name) == os.path.getsize(fp_sqlite3.name)
 
@@ -203,3 +224,6 @@ def test_deserialize_iter(bucket, page_size, block_size, journal_mode):
         cursor.execute('SELECT * FROM foo;')
 
         assert cursor.fetchall() == [(1, 2)] * 100
+
+        cursor.execute('PRAGMA integrity_check;')
+        assert cursor.fetchall() == [('ok',)]
