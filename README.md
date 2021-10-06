@@ -54,7 +54,7 @@ key_prefix = 'my/path/cool.sqlite'
 # Connect, insert data, and query
 with apsw.Connection(key_prefix, vfs=s3vfs.name) as db:
     cursor = db.cursor()
-    cursor.execute(f'''
+    cursor.execute('''
         CREATE TABLE foo(x,y);
         INSERT INTO foo VALUES(1,2);
     ''')
