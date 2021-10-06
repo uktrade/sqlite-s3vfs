@@ -94,6 +94,20 @@ s3vfs.deserialize_iter(key_prefix='my/path/cool.sqlite', bytes_iter=bytes_iter)
 ```
 
 
+### Block size and page size
+
+SQLite writes data in _pages_, which are 4096 bytes by default. sqlite-s3vfs stores data in _blocks_, which are also 4096 bytes by default. If you change one you should change the other to match for performance reasons.
+
+```python
+s3vfs = sqlite_s3vfs.S3VFS(bucket=bucket, block_size=65536)
+with apsw.Connection(key_prefix, vfs=s3vfs.name) as db:
+    cursor = db.cursor()
+    cursor.execute('''
+        PRAGMA page_size = 65536;
+    ''')
+```
+
+
 ## Tests
 
 The tests require the dev dependencies and APSW to installed, and MinIO started
