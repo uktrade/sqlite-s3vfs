@@ -252,3 +252,9 @@ def test_byte_lock_page(bucket, page_size, block_size):
         cursor.execute('DELETE FROM foo;')
         cursor.execute('SELECT * FROM foo LIMIT 1;')
         assert cursor.fetchall() == [] 
+
+        with transaction(db.cursor()) as cursor:
+            cursor.executemany('INSERT INTO foo VALUES (?);', (empty for _ in range(0, 300000)))
+
+        cursor.execute('SELECT * FROM foo LIMIT 1;')
+        assert cursor.fetchall() == [empty]
