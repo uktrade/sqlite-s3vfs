@@ -162,6 +162,25 @@ class S3VFSFile:
         return True
 
     def xWrite(self, data, offset):
+        lock_page_offset = 1073741824
+        page_size = len(data)
+
+        if offset == lock_page_offset + page_size:
+            # Ensure the previous blocks have enough bytes for size calculations and serialization.
+            # SQLite seems to always write pages sequentially, except that it skips the byte-lock
+            # page, so we only check previous blocks if we know we're just after the byte-lock
+            # page.
+
+            data_first_block = offset // self._block_size
+            lock_page_block = lock_page_offset // self._block_size
+            for block in range(data_first_block - 1, lock_page_block - 1, -1):
+                original_block_bytes = self._block_bytes(block)
+                if len(original_block_bytes) == self._block_size:
+                    break
+                self._block_object(block).put(Body=original_block_bytes + bytes(
+                    self._block_size - len(original_block_bytes)
+                ))
+
         data_offset = 0
         for block, start, write in self._blocks(offset, len(data)):
 
@@ -169,7 +188,7 @@ class S3VFSFile:
 
             if start != 0 or len(data_to_write) != self._block_size:
                 original_block_bytes = self._block_bytes(block)
-                assert len(original_block_bytes) >= start, 'SQLite is writing pages out of order'
+                original_block_bytes = original_block_bytes + bytes(max(start - len(original_block_bytes), 0))
 
                 data_to_write = \
                     original_block_bytes[0:start] + \
