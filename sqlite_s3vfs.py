@@ -169,6 +169,8 @@ class S3VFSFile:
 
             if start != 0 or len(data_to_write) != self._block_size:
                 original_block_bytes = self._block_bytes(block)
+                assert len(original_block_bytes) >= start, 'SQLite is writing pages out of order'
+
                 data_to_write = \
                     original_block_bytes[0:start] + \
                     data_to_write + \
