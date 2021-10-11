@@ -227,3 +227,24 @@ def test_deserialize_iter(bucket, page_size, block_size, journal_mode):
 
         cursor.execute('PRAGMA integrity_check;')
         assert cursor.fetchall() == [('ok',)]
+
+
+@pytest.mark.parametrize(
+    'page_size', [65536]
+)
+@pytest.mark.parametrize(
+    'block_size', [65536]
+)
+def test_byte_lock_page(bucket, page_size, block_size):
+    s3vfs = S3VFS(bucket=bucket, block_size=block_size)
+    empty = (bytes(4050),)
+
+    with closing(apsw.Connection('another-test/cool.db', vfs=s3vfs.name)) as db:
+        db.cursor().execute(f'PRAGMA page_size = {page_size};')
+
+        with transaction(db.cursor()) as cursor:
+            cursor.execute('CREATE TABLE foo(content BLOB);')
+            cursor.executemany('INSERT INTO foo VALUES (?);', (empty for _ in range(0, 300000)))
+
+        cursor.execute('SELECT * FROM foo LIMIT 1;')
+        assert cursor.fetchall() == [empty]
