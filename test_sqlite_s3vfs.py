@@ -248,3 +248,7 @@ def test_byte_lock_page(bucket, page_size, block_size):
 
         cursor.execute('SELECT * FROM foo LIMIT 1;')
         assert cursor.fetchall() == [empty]
+
+        cursor.execute('DELETE FROM foo;')
+        cursor.execute('SELECT * FROM foo LIMIT 1;')
+        assert cursor.fetchall() == [] 
