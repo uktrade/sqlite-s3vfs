@@ -258,3 +258,9 @@ def test_byte_lock_page(bucket, page_size, block_size):
 
         cursor.execute('SELECT * FROM foo LIMIT 1;')
         assert cursor.fetchall() == [empty]
+
+
+def test_set_temp_store_which_calls_xaccess(bucket):
+    s3vfs = S3VFS(bucket=bucket)
+    with closing(apsw.Connection('another-test/cool.db', vfs=s3vfs.name)) as db:
+        db.cursor().execute("pragma temp_store_directory = 'my-temp-store'")
