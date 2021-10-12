@@ -10,10 +10,12 @@ class S3VFS(apsw.VFS):
         super().__init__(name=self.name, base='')
 
     def xAccess(self, pathname, flags):
-        if flags == apsw.mapping_access["SQLITE_ACCESS_EXISTS"]:
-            return any(self._bucket.objects.filter(Prefix=pathname + '/'))
-
-        return True
+        return (
+            flags == apsw.mapping_access["SQLITE_ACCESS_EXISTS"]
+            and any(self._bucket.objects.filter(Prefix=pathname + '/'))
+        ) or (
+            flags != apsw.mapping_access["SQLITE_ACCESS_EXISTS"]
+        )
 
     def xFullPathname(self, filename):
         return filename
