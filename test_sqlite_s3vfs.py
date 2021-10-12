@@ -38,6 +38,7 @@ def transaction(cursor):
     try:
         yield cursor
     except:
+        cursor.execute('ROLLBACK;')
         raise
     else:
         cursor.execute('COMMIT;')
@@ -264,3 +265,45 @@ def test_set_temp_store_which_calls_xaccess(bucket):
     s3vfs = S3VFS(bucket=bucket)
     with closing(apsw.Connection('another-test/cool.db', vfs=s3vfs.name)) as db:
         db.cursor().execute("pragma temp_store_directory = 'my-temp-store'")
+
+
+@pytest.mark.parametrize(
+    'page_size', [4096]
+)
+@pytest.mark.parametrize(
+    'block_size', [4095, 4096, 4097]
+)
+@pytest.mark.parametrize(
+    'journal_mode', [journal_mode for journal_mode in JOURNAL_MODES if journal_mode != 'OFF']
+)
+def test_rollback(bucket, page_size, block_size, journal_mode):
+    s3vfs = S3VFS(bucket=bucket, block_size=block_size)
+
+    with closing(apsw.Connection('another-test/cool.db', vfs=s3vfs.name)) as db:
+        db.cursor().execute(f'PRAGMA page_size = {page_size};')
+        db.cursor().execute(f'PRAGMA journal_mode = {journal_mode};')
+        db.cursor().execute('CREATE TABLE foo(content text);')
+
+        try:
+            with transaction(db.cursor()) as cursor:
+                cursor.execute("INSERT INTO foo VALUES ('hello');");
+                cursor.execute('SELECT * FROM foo;')
+                assert cursor.fetchall() == [('hello',)]
+                raise Exception()
+        except:
+            cursor.execute('SELECT * FROM foo;')
+            assert cursor.fetchall() == []
+
+        cursor.execute("INSERT INTO foo VALUES ('hello');");
+        cursor.execute('SELECT * FROM foo;')
+        assert cursor.fetchall() == [('hello',)]
+
+        try:
+            with transaction(db.cursor()) as cursor:
+                cursor.execute("UPDATE foo SET content='goodbye'");
+                cursor.execute('SELECT * FROM foo;')
+                assert cursor.fetchall() == [('goodbye',)]
+                raise Exception()
+        except:
+            cursor.execute('SELECT * FROM foo;')
+            assert cursor.fetchall() == [('hello',)]
