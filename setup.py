@@ -20,7 +20,7 @@ setuptools.setup(
         'License :: OSI Approved :: MIT License',
         'Topic :: Database',
     ],
-    python_requires='>=3.6.0',
+    python_requires='>=3.7.11',
     install_requires=[
         'boto3>=1.18.51',
     ],

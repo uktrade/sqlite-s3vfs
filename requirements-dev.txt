@@ -16,6 +16,8 @@ botocore==1.21.51
     #   s3transfer
 coverage==6.0
     # via -r requirements-dev.in
+exceptiongroup==1.0.0
+    # via pytest
 iniconfig==1.1.1
     # via pytest
 jmespath==0.10.0
@@ -26,11 +28,9 @@ packaging==21.0
     # via pytest
 pluggy==1.0.0
     # via pytest
-py==1.10.0
-    # via pytest
 pyparsing==2.4.7
     # via packaging
-pytest==6.2.5
+pytest==7.2.0
     # via -r requirements-dev.in
 python-dateutil==2.8.2
     # via botocore
@@ -38,7 +38,7 @@ s3transfer==0.5.0
     # via boto3
 six==1.16.0
     # via python-dateutil
-toml==0.10.2
+tomli==2.0.1
     # via pytest
 urllib3==1.26.7
     # via botocore
