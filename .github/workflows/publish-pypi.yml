@@ -12,6 +12,10 @@ jobs:
         with:
           python-version: 3.11
 
+      - name: Update version in pyproject.toml from current git tag
+        run: >-
+          sed -i "s/0\\.0\\.0\\.dev0/${GITHUB_REF/refs\/tags\/v/}/g" setup.py
+          
       - run: |
           pip install build
           python -m build
