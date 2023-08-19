@@ -115,7 +115,7 @@ with apsw.Connection(key_prefix, vfs=s3vfs.name) as db:
 The tests require the dev dependencies and APSW to installed, and MinIO started
 
 ```bash
-pip install -r requirements-dev.txt
+pip install -e ".[dev]"
 pip install https://github.com/rogerbinns/apsw/releases/download/3.36.0-r1/apsw-3.36.0-r1.zip --global-option=fetch --global-option=--version --global-option=3.36.0 --global-option=--all --global-option=build --global-option=--enable-all-extensions
 ./start-minio.sh
 ```
