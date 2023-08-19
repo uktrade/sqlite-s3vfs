@@ -1,4 +1,6 @@
-# sqlite-s3vfs [![CircleCI](https://circleci.com/gh/uktrade/sqlite-s3vfs.svg?style=shield)](https://circleci.com/gh/uktrade/sqlite-s3vfs) [![Test Coverage](https://api.codeclimate.com/v1/badges/6df8a84b0ff21d7ecf22/test_coverage)](https://codeclimate.com/github/uktrade/sqlite-s3vfs/test_coverage)
+# sqlite-s3vfs
+
+[![PyPI package](https://img.shields.io/pypi/v/sqlite-s3vfs?label=PyPI%20package&color=%234c1)](https://pypi.org/project/sqlite-s3vfs/) [![Test suite](https://img.shields.io/github/actions/workflow/status/uktrade/sqlite-s3vfs/test.yml?label=Test%20suite)](https://github.com/uktrade/sqlite-s3vfs/actions/workflows/test.yml) [![Code coverage](https://img.shields.io/codecov/c/github/uktrade/sqlite-s3vfs?label=Code%20coverage)](https://app.codecov.io/gh/uktrade/sqlite-s3vfs)
 
 Python virtual filesystem for SQLite to read from and write to S3.
 

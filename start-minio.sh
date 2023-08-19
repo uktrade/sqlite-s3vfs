@@ -15,3 +15,5 @@ docker run --rm -p 9000:9000 --name sqlite-s3vfs-minio -d \
     mkdir -p /data4 &&
     minio server /data{1...4}
   '
+
+timeout 60 bash -c 'until echo > /dev/tcp/127.0.0.1/9000; do sleep 5; done'
