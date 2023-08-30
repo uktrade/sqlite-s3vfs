@@ -18,6 +18,7 @@ classifiers = [
 ]
 dependencies = [
     "boto3>=1.18.51",
+    "apsw>=3.43.0.0",
 ]
 
 [project.optional-dependencies]
