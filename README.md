@@ -18,20 +18,13 @@ Separate objects are required since S3 does not support the partial replace of a
 
 ## Installation
 
-sqlite-s3vfs depends on [APSW](https://github.com/rogerbinns/apsw), which is not officially available on PyPI, but can be installed directly from GitHub.
+sqlite-s3vfs can be installed from PyPI using `pip`.
 
 ```bash
 pip install sqlite-s3vfs
-pip install https://github.com/rogerbinns/apsw/releases/download/3.36.0-r1/apsw-3.36.0-r1.zip --global-option=fetch --global-option=--version --global-option=3.36.0 --global-option=--sqlite --global-option=build --global-option=--enable-all-extensions
 ```
 
-Installing APSW from GitHub can be difficult on some platforms since it involves compiling a Python extension and (depending on options chosen) SQLite itself. As an alternative, sqlite-s3vfs should work with [apsw-wheels](https://pypi.org/project/apsw-wheels/), which includes binaries for various platforms.
-
-```bash
-pip install apsw-wheels
-```
-
-However, at the time of writing aspw-wheels has no official relationship with APSW.
+This will automatically install [boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html), [APSW](https://rogerbinns.github.io/apsw/), and any of their dependencies.
 
 
 ## Usage
@@ -112,11 +105,10 @@ with apsw.Connection(key_prefix, vfs=s3vfs.name) as db:
 
 ## Tests
 
-The tests require the dev dependencies and APSW to installed, and MinIO started
+The tests require the dev dependencies and MinIO started
 
 ```bash
 pip install -e ".[dev]"
-pip install https://github.com/rogerbinns/apsw/releases/download/3.36.0-r1/apsw-3.36.0-r1.zip --global-option=fetch --global-option=--version --global-option=3.36.0 --global-option=--all --global-option=build --global-option=--enable-all-extensions
 ./start-minio.sh
 ```
 
