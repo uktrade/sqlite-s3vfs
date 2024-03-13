@@ -128,6 +128,9 @@ class S3VFSFile:
 
         return b"".join(_read())
 
+    def xSectorSize(self):
+        return 0
+
     def xFileControl(self, *args):
         return False
 
